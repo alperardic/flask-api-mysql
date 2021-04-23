@@ -40,4 +40,6 @@ def mysql_connect():
         return(mysql_errors(e))
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port='8080',debug=True)
+    app.run(host=config['API']['api_host'], 
+            port=config['API']['api_port'],
+            debug=config['API']['api_debug_mode'])
