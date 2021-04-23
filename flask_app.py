@@ -1,4 +1,10 @@
 from flask import Flask
+from configparser import ConfigParser
+from os import path
+
+dir_path = path.dirname(path.realpath(__file__))
+config = ConfigParser()
+config.read(f'{dir_path}/flask_app.cfg')
 
 app = Flask(__name__)
 
