@@ -1,11 +1,16 @@
 from flask import Flask
 from configparser import ConfigParser
 from os import path
+from mysql.connector import errorcode
 import mysql.connector
+import logging
 
 dir_path = path.dirname(path.realpath(__file__))
 config = ConfigParser()
 config.read(f'{dir_path}/flask_app.cfg')
+logging.basicConfig(filename = config['LOGGING']['log_file'], level = config['LOGGING']['log_level'])
+
+app = Flask(__name__)
 
 def connect():
     return mysql.connector.connect(
@@ -15,23 +20,24 @@ def connect():
         database = config['DB']['mysql_database'],
         auth_plugin = 'mysql_native_password')
 
-app = Flask(__name__)
+def mysql_errors(e):
+    if(e.errno == errorcode.ER_ACCESS_DENIED_ERROR):
+        logging.error(str(e))
+        return("AUTH ERROR! CHECK YOUR LOG FILE FOR MORE INFO.")
+    elif(e.errno == errorcode.ER_BAD_DB_ERROR):
+        logging.error(str(e))
+        return("DB NOT EXIST! CHECK YOUR LOG FILE FOR MORE INFO.")
+    else:
+        logging.error(str(e))
+        return("UNKNOWN ERROR! CHECK YOUR LOG FILE FOR MORE INFO.")
 
 @app.route('/connect', methods=['GET'])
 def mysql_connect():
     try:
         mysqldb = connect()
-        return ("SUCCESS")
+        return("SUCCESS")
     except mysql.connector.Error as e:
-        if(e.errno == mysql.connector.errorcode.ER_ACCESS_DENIED_ERROR):
-            print(str(e))
-            return("AUTH ERROR!")
-        elif(e.errno == mysql.connector.errorcode.ER_BAD_DB_ERROR):
-            print(str(e))
-            return("DB NOT EXIST!")
-        else:
-            print(str(e))
-            return("UNKNOWN ERROR!")
+        return(mysql_errors(e))
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port='8080',debug=True)
