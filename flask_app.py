@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, make_response
+from flask import Flask, jsonify, make_response, request
 from configparser import ConfigParser
 from os import path
 from mysql.connector import errorcode
@@ -26,10 +26,28 @@ def mysql_errors(e):
         return make_response(jsonify(Success = False, ERROR = 'AUTH ERROR! CHECK YOUR LOG FILE FOR MORE INFO!'), 404)
     elif(e.errno == errorcode.ER_BAD_DB_ERROR):
         logging.error(str(e))
-        return make_response(jsonify(Success = False, ERROR = 'DB NOT EXIST! CHECK YOUR LOG FILE FOR MORE INFO!'), 404)
+        return make_response(jsonify(Success = False, ERROR = 'DB DOES NOT EXIST! CHECK YOUR LOG FILE FOR MORE INFO!'), 404)
+    elif(e.errno == errorcode.ER_BAD_TABLE_ERROR):
+        logging.error(str(e))
+        return make_response(jsonify(Success = False, ERROR = 'TABLE DOES NOT EXIST! CHECK YOUR LOG FILE FOR MORE INFO!'), 404)
     else:
         logging.error(str(e))
         return make_response(jsonify(Success = False, ERROR = "UNKNOWN ERROR! CHECK YOUR LOG FILE FOR MORE INFO."), 404)
+
+def mysql_insert(table_name, firstname, lastname, email):
+    try:
+        mysqldb = connect()
+        cursor = mysqldb.cursor(buffered=True)
+        query = f""" INSERT INTO 
+        {config['DB']['mysql_database']}.{table_name}
+        ( firstname, lastname, email ) VALUES 
+        ( '{firstname}', '{lastname}', '{email}') """
+        cursor.execute(query)
+        mysqldb.commit()
+        mysqldb.close()
+        return make_response(jsonify(Success=True, Status=f"NEW VALUES ADDED TO {table_name}"), 200)
+    except mysql.connector.Error as e:
+        return(mysql_errors(e))
 
 @app.route('/connect', methods = ['GET'])
 def mysql_connect():
@@ -39,6 +57,26 @@ def mysql_connect():
         return make_response(jsonify(Success = True), 200)
     except mysql.connector.Error as e:
         return(mysql_errors(e))
+
+@app.route('/insert', methods = ['POST', 'PUT'])
+def insert():
+    req_methods = request.method
+
+    if req_methods == 'POST': 
+        table_name = request.args.get("table_name")
+        firstname = request.args.get("firstname")
+        lastname = request.args.get("lastname")
+        email = request.args.get("email")
+        return(mysql_insert(table_name,firstname,lastname,email))
+    elif req_methods == 'PUT': #json formatında al.
+        js_object = request.get_json()
+        table_name = js_object["table_name"]
+        firstname = js_object["firstname"]
+        lastname = js_object["lastname"]
+        email = js_object["email"]
+        return(mysql_insert(table_name,firstname,lastname,email))
+    else:
+        return make_response(jsonify(ERROR=f"{req_methods} METHOD IS NOT ALLOWED!"), 405)
 
 if __name__ == "__main__":
     app.run(host=config['API']['api_host'], 
