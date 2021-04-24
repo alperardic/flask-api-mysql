@@ -215,6 +215,39 @@ def delete():
         return make_response(jsonify(Succces = True, Status = "Delete işlemi başarı ile tamamlandı."), 200)
     except mysql.connector.Error as e:
         return make_response(jsonify(mysql_errors(e)), 404)
+
+@app.route('/update', methods = ['POST'])
+def update():
+    table_name = request.args.get("table_name")
+    id = request.args.get("id")
+    firstname = request.args.get("firstname")
+    lastname = request.args.get("lastname")
+    email = request.args.get("email")
+    try:
+        mysqldb = mysql_connect()
+        cursor = mysqldb.cursor(buffered=True)
+        #table_name verilmezse
+        if (table_name == None):
+            return make_response(jsonify(Success = False, Error = "Tablo ismi girilmedi!"), 403)
+        #sadece id ile firstname, lastname, email degistirme
+        elif (table_name != None and id != None and firstname != None and lastname != None and email != None):
+            query = f"""UPDATE {config['DB']['mysql_database']}.{table_name}
+            SET firstname = '{firstname}', lastname = '{lastname}', email = '{email}'
+            WHERE id = '{id}' """
+        #sadece eposta ile firstname, lastname degistirme
+        elif (table_name != None and id == None and firstname != None and lastname != None and email != None):
+            query = f"""UPDATE {config['DB']['mysql_database']}.{table_name}
+            SET firstname = '{firstname}', lastname = '{lastname}'
+            WHERE email = '{email}' """
+        else:
+            return make_response(jsonify(Success = False, Error = "Geçersiz update işlemi!"), 403)
+        cursor.execute(query)
+        mysqldb.commit()
+        mysqldb.close()
+        return make_response(jsonify(Success = True, Status = "Update işlemi başarı ile tamamlandı."), 200)
+    except mysql.connector.Error as e:
+        return make_response(jsonify(mysql_errors(e)), 404)
+
 if __name__ == "__main__":
     app.run(host=config['API']['api_host'], 
             port=config['API']['api_port'],
