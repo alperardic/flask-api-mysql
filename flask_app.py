@@ -46,146 +46,72 @@ def connect():
 @app.route('/select', methods = ['GET'])
 def select():
     table_name = request.args.get("table_name")
-    id_obj = request.args.get("id")
+    id = request.args.get("id")
     firstname = request.args.get("firstname")
     lastname = request.args.get("lastname")
     email = request.args.get("email")
-    
-    #sadece table_name verilirse
-    if (firstname == None and lastname == None and email == None and id_obj == None and table_name != None):
-        try:
-            mysqldb = mysql_connect()
-            cursor = mysqldb.cursor(buffered=True)
+    try:
+        mysqldb = mysql_connect()
+        cursor = mysqldb.cursor(buffered=True)
+        
+        #table_name girilmezse
+        if (table_name == None):
+            return make_response(jsonify(Success = False , Error = "Tablo ismi girilmedi!"), 403)
+        #Butun tablo icin
+        elif (table_name != None and id == None and firstname == None and lastname == None and email == None):
             query = f""" SELECT * FROM
             {config['DB']['mysql_database']}.{table_name} """
-            cursor.execute(query)
-            row_headers=[x[0] for x in cursor.description]
-            response = cursor.fetchall()
-            json_data=[]
-            for result in response:
-                json_data.append(dict(zip(row_headers, result)))
-            mysqldb.close()
-            if json_data == []:
-                return make_response(jsonify(Success=False, Status="Aradığınız veri bulunamadı!"), 404)
-            else:
-                return make_response(jsonify(json_data), 200)
-        except mysql.connector.Error as e:
-            return make_response(jsonify(Success = False, Status = f"{table_name} isminde bir tablo bulunamadi!"), 404)
-    
-    # table_name ve email verilirse.
-    elif (firstname == None and lastname == None and id_obj == None and table_name != None):
-        try:
-            mysqldb = mysql_connect()
-            cursor = mysqldb.cursor(buffered=True)
+        #Sadece id verilirse
+        elif (table_name != None and id != None and firstname == None and lastname == None and email == None):
             query = f""" SELECT * FROM
             {config['DB']['mysql_database']}.{table_name} 
-            WHERE email = '{email}'"""
-            cursor.execute(query)
-            row_headers=[x[0] for x in cursor.description]
-            response = cursor.fetchall()
-            json_data=[]
-            for result in response:
-                json_data.append(dict(zip(row_headers, result)))
-            mysqldb.close()
-            if json_data == []:
-                return make_response(jsonify(Success=False, Status="Aradığınız veri bulunamadı!"), 404)
-            else:
-                return make_response(jsonify(json_data), 200)
-        except mysql.connector.Error as e:
-            return make_response(jsonify(mysql_errors(e)), 404)
-    
-    # table_name ve id verilirse
-    elif (firstname == None and lastname == None and email == None and table_name != None):
-        try:
-            mysqldb = mysql_connect()
-            cursor = mysqldb.cursor(buffered=True)
-            query = f""" SELECT * FROM
-            {config['DB']['mysql_database']}.{table_name} 
-            WHERE id = '{id_obj}'"""
-            cursor.execute(query)
-            row_headers=[x[0] for x in cursor.description]
-            response = cursor.fetchall()
-            json_data=[]
-            for result in response:
-                json_data.append(dict(zip(row_headers, result)))
-            mysqldb.close()
-            if json_data == []:
-                return make_response(jsonify(Success=False, Status="Aradığınız veri bulunamadı!"), 404)
-            else:
-                return make_response(jsonify(json_data), 200)
-        except mysql.connector.Error as e:
-            return make_response(jsonify(mysql_errors(e)), 404)
-    
-    # table_name ve firstname verilirse
-    elif (lastname == None and email == None and id_obj == None and table_name != None):
-        try:
-            mysqldb = mysql_connect()
-            cursor = mysqldb.cursor(buffered=True)
+            WHERE id = '{id}'"""
+        #Sadece firstname verilirse
+        elif (table_name != None and id == None and firstname != None and lastname == None and email == None):
             query = f""" SELECT * FROM
             {config['DB']['mysql_database']}.{table_name} 
             WHERE firstname = '{firstname}'"""
-            cursor.execute(query)
-            row_headers=[x[0] for x in cursor.description]
-            response = cursor.fetchall()
-            json_data=[]
-            for result in response:
-                json_data.append(dict(zip(row_headers, result)))
-            mysqldb.close()
-            if json_data == []:
-                return make_response(jsonify(Success=False, Status="Aradığınız veri bulunamadı!"), 404)
-            else:
-                return make_response(jsonify(json_data), 200)
-        except mysql.connector.Error as e:
-            return make_response(jsonify(mysql_errors(e)), 404)
-
-    # table_name ve lastname verilirse
-    elif (firstname == None and email == None and id_obj == None and table_name != None):
-        try:
-            mysqldb = mysql_connect()
-            cursor = mysqldb.cursor(buffered=True)
+        #Sadece lastname verilirse
+        elif (table_name != None and id == None and firstname == None and lastname != None and email == None):
             query = f""" SELECT * FROM
             {config['DB']['mysql_database']}.{table_name} 
             WHERE lastname = '{lastname}'"""
-            cursor.execute(query)
-            row_headers=[x[0] for x in cursor.description]
-            response = cursor.fetchall()
-            json_data=[]
-            for result in response:
-                json_data.append(dict(zip(row_headers, result)))
-            mysqldb.close()
-            if json_data == []:
-                return make_response(jsonify(Success=False, Status="Aradığınız veri bulunamadı!"), 404)
-            else:
-                return make_response(jsonify(json_data), 200)
-        except mysql.connector.Error as e:
-            return make_response(jsonify(mysql_errors(e)), 404)
-    
-    # table_name, firstname ve lastname verilirse
-    elif (email == None and id_obj == None and table_name != None):
-        try:
-            mysqldb = mysql_connect()
-            cursor = mysqldb.cursor(buffered=True)
+        #Sadece email verilirse
+        elif (table_name != None and id == None and firstname == None and lastname == None and email != None):
+            query = f""" SELECT * FROM
+            {config['DB']['mysql_database']}.{table_name} 
+            WHERE email = '{email}'"""
+        #firstname ve lastname verilirse
+        elif (table_name != None and id == None and firstname != None and lastname != None and email == None):
             query = f""" SELECT * FROM
             {config['DB']['mysql_database']}.{table_name} 
             WHERE firstname = '{firstname}' AND lastname = '{lastname}'"""
-            cursor.execute(query)
-            row_headers=[x[0] for x in cursor.description]
-            response = cursor.fetchall()
-            json_data=[]
-            for result in response:
-                json_data.append(dict(zip(row_headers, result)))
-            mysqldb.close()
-            if json_data == []:
-                return make_response(jsonify(Success=False, Status="Aradığınız veri bulunamadı!"), 404)
-            else:
-                return make_response(jsonify(json_data), 200)
-        except mysql.connector.Error as e:
-            return make_response(jsonify(mysql_errors(e)), 404)
-    # table_name verilmezse
-    elif (table_name == None and firstname == None and lastname == None and email == None and id_obj == None):
-        return make_response(jsonify(Success=False, Status="Tablo ismi belirtilmedi."), 404)
-    else:
-        return make_response(jsonify(Success=False, Status="Aradığınız veri bulunamadı.."), 404)
+        #firstname ve email verilirse
+        elif (table_name != None and id == None and firstname != None and lastname == None and email != None):
+            query = f""" SELECT * FROM
+            {config['DB']['mysql_database']}.{table_name} 
+            WHERE firstname = '{firstname}' AND email = '{email}'"""
+        #firstname, lastname ve email verilirse
+        elif (table_name != None and id == None and firstname != None and lastname != None and email != None):
+            query = f""" SELECT * FROM
+            {config['DB']['mysql_database']}.{table_name} 
+            WHERE firstname = '{firstname}' AND lastname='{lastname}' AND email = '{email}'"""
+        else:
+            return make_response(jsonify(Success = False, Error = "İstenilen sorgu yapılamaz!"), 403)
+        
+        cursor.execute(query)
+        row_headers=[x[0] for x in cursor.description]
+        response = cursor.fetchall()
+        json_data=[]
+        for result in response:
+            json_data.append(dict(zip(row_headers, result)))
+        mysqldb.close()
+        if json_data == []:
+            return make_response(jsonify(Success=False, Error="Aradığınız veri bulunamadı!"), 404)
+        else:
+            return make_response(jsonify(json_data), 200)
+    except mysql.connector.Error as e:
+        return make_response(jsonify(mysql_errors(e)), 404)
 
 @app.route('/insert', methods = ['POST', 'PUT'])
 def insert():
@@ -241,9 +167,10 @@ def delete():
     try:
         mysqldb = mysql_connect()
         cursor = mysqldb.cursor(buffered=True)
+        
         # table_name verilmezse
         if (table_name == None):
-            return make_response(jsonify(Success = False, Status = "Geçerli tablo ismi girilmedi."), 404)
+            return make_response(jsonify(Success = False, Error = "Geçerli tablo ismi girilmedi."), 404)
         # Sadece id ile silme islemi
         elif (id != None and table_name != None and firstname == None and lastname == None and email == None):
             query = f"""DELETE FROM {config['DB']['mysql_database']}.{table_name}
@@ -280,15 +207,14 @@ def delete():
             WHERE lastname='{lastname}' AND email={email} """
         # 
         else:
-            return make_response(jsonify(Success = False, Status = "İstenilen silme işlemi yapılamaz!"), 403)
+            return make_response(jsonify(Success = False, Error = "İstenilen silme işlemi yapılamaz!"), 403)
+        
         cursor.execute(query)
         mysqldb.commit()
         mysqldb.close()
         return make_response(jsonify(Succces = True, Status = "Delete işlemi başarı ile tamamlandı."), 200)
     except mysql.connector.Error as e:
         return make_response(jsonify(mysql_errors(e)), 404)
-    return ("Delete")
-
 if __name__ == "__main__":
     app.run(host=config['API']['api_host'], 
             port=config['API']['api_port'],
