@@ -231,6 +231,64 @@ def insert():
     else:
         return make_response(jsonify(ERROR=f"{req_methods} METHOD IS NOT ALLOWED!"), 405)
 
+@app.route('/delete', methods = ['DELETE'])
+def delete():
+    table_name = request.args.get('table_name')
+    id = request.args.get('id')
+    firstname = request.args.get('firstname')
+    lastname = request.args.get('lastname')
+    email = request.args.get('email')
+    try:
+        mysqldb = mysql_connect()
+        cursor = mysqldb.cursor(buffered=True)
+        # table_name verilmezse
+        if (table_name == None):
+            return make_response(jsonify(Success = False, Status = "Geçerli tablo ismi girilmedi."), 404)
+        # Sadece id ile silme islemi
+        elif (id != None and table_name != None and firstname == None and lastname == None and email == None):
+            query = f"""DELETE FROM {config['DB']['mysql_database']}.{table_name}
+            WHERE id='{id}' """
+    
+        # Sadece firstname ile silme islemi
+        elif (id == None and table_name != None and firstname != None and lastname == None and email == None):
+            query = f"""DELETE FROM {config['DB']['mysql_database']}.{table_name}
+            WHERE firstname='{firstname}' """
+    
+        # Sadece lastname ile silme islemi
+        elif (id == None and table_name != None and firstname == None and lastname != None and email == None):
+            query = f"""DELETE FROM {config['DB']['mysql_database']}.{table_name}
+            WHERE lastname='{lastname}' """
+    
+        # Sadece email ile silme islemi
+        elif (id == None and table_name != None and firstname == None and lastname == None and email != None):
+            query = f"""DELETE FROM {config['DB']['mysql_database']}.{table_name}
+            WHERE email='{email}' """
+    
+        # firstname ve lastname ile silme islemi
+        elif (id == None and table_name != None and firstname != None and lastname != None and email == None):
+            query = f"""DELETE FROM {config['DB']['mysql_database']}.{table_name}
+            WHERE firstname='{firstname}' AND lastname={lastname} """
+    
+        # firstname ve email ile silme islemi
+        elif (id == None and table_name != None and firstname != None and lastname == None and email != None):
+            query = f"""DELETE FROM {config['DB']['mysql_database']}.{table_name}
+            WHERE firstname='{firstname}' AND email={email} """
+
+        # lastname ve email ile silme islemi
+        elif (id == None and table_name != None and firstname == None and lastname != None and email != None):
+            query = f"""DELETE FROM {config['DB']['mysql_database']}.{table_name}
+            WHERE lastname='{lastname}' AND email={email} """
+        # 
+        else:
+            return make_response(jsonify(Success = False, Status = "İstenilen silme işlemi yapılamaz!"), 403)
+        cursor.execute(query)
+        mysqldb.commit()
+        mysqldb.close()
+        return make_response(jsonify(Succces = True, Status = "Delete işlemi başarı ile tamamlandı."), 200)
+    except mysql.connector.Error as e:
+        return make_response(jsonify(mysql_errors(e)), 404)
+    return ("Delete")
+
 if __name__ == "__main__":
     app.run(host=config['API']['api_host'], 
             port=config['API']['api_port'],
