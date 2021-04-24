@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify, make_response
 from configparser import ConfigParser
 from os import path
 from mysql.connector import errorcode
@@ -23,19 +23,20 @@ def connect():
 def mysql_errors(e):
     if(e.errno == errorcode.ER_ACCESS_DENIED_ERROR):
         logging.error(str(e))
-        return("AUTH ERROR! CHECK YOUR LOG FILE FOR MORE INFO.")
+        return make_response(jsonify(Success = False, ERROR = 'AUTH ERROR! CHECK YOUR LOG FILE FOR MORE INFO!'), 404)
     elif(e.errno == errorcode.ER_BAD_DB_ERROR):
         logging.error(str(e))
-        return("DB NOT EXIST! CHECK YOUR LOG FILE FOR MORE INFO.")
+        return make_response(jsonify(Success = False, ERROR = 'DB NOT EXIST! CHECK YOUR LOG FILE FOR MORE INFO!'), 404)
     else:
         logging.error(str(e))
-        return("UNKNOWN ERROR! CHECK YOUR LOG FILE FOR MORE INFO.")
+        return make_response(jsonify(Success = False, ERROR = "UNKNOWN ERROR! CHECK YOUR LOG FILE FOR MORE INFO."), 404)
 
-@app.route('/connect', methods=['GET'])
+@app.route('/connect', methods = ['GET'])
 def mysql_connect():
     try:
         mysqldb = connect()
-        return("SUCCESS")
+        mysqldb.close()
+        return make_response(jsonify(Success = True), 200)
     except mysql.connector.Error as e:
         return(mysql_errors(e))
 
